@@ -206,7 +206,6 @@ public class TupleDesc implements Serializable {
    public static TupleDesc merge(TupleDesc td1, TupleDesc td2) {
         ArrayList<TDItem> combinedItems = new ArrayList<>();
 
-        // Encapsulation is still respected here
         combinedItems.addAll(td1.tdItems);
         combinedItems.addAll(td2.tdItems);
 
