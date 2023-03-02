@@ -33,6 +33,13 @@ public class BufferPool {
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
 
+    // store up to numPages pages
+    private final int numPages;
+
+    // store pages in a hash map
+    private ConcurrentHashMap<PageId, Page> pages;
+
+
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
@@ -40,6 +47,8 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         // some code goes here
+        this.numPages = numPages;
+        this.pages = new ConcurrentHashMap<PageId, Page>();
     }
     
     public static int getPageSize() {
@@ -71,10 +80,37 @@ public class BufferPool {
      * @param pid the ID of the requested page
      * @param perm the requested permissions on the page
      */
-    public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
+    public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
         // some code goes here
-        return null;
+        // Permissions have READ_ONLY, READ_WRITE
+        if (perm == Permissions.READ_WRITE) {
+            // acquire lock
+            // if lock is held by another transaction, block
+            // if lock is not held by another transaction, acquire lock
+        } else if (perm == Permissions.READ_ONLY) {
+            // acquire lock
+            // if lock is held by another transaction, block
+            // if lock is not held by another transaction, acquire lock
+        } else {
+            throw new DbException("Invalid permissions");
+        }
+
+        // if page is present, return it
+        // if page is not present, add it to buffer pool and return it
+        // if there is insufficient space in buffer pool, evict a page and add new page
+        if (this.pages.containsKey(pid)) {
+            return this.pages.get(pid);
+        } else {
+            // if there is insufficient space in buffer pool, evict a page (not implemented yet)
+            if (this.pages.size() >= this.numPages) {
+                evictPage();
+            }
+            // add new page to buffer pool in database
+            Page page = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+            this.pages.put(pid, page);
+            return page;
+        }
     }
 
     /**
