@@ -37,7 +37,10 @@ public class SeqScan implements OpIterator {
      *            tableAlias.null, or null.null).
      */
     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
-        // some code goes here
+        this.tid = tid;
+        this.tableid = tableid;
+        this.tableAlias = tableAlias;
+        this.iterator = Database.getCatalog().getDatabaseFile(this.tableid).iterator(this.tid);
     }
 
     /**
@@ -46,8 +49,7 @@ public class SeqScan implements OpIterator {
      *       be the actual name of the table in the catalog of the database
      * */
     public String getTableName() {
-	// some code goes here
-        return null;
+        return Database.getCatalog().getTableName(tableid);
     }
 
     /**
@@ -56,7 +58,7 @@ public class SeqScan implements OpIterator {
     public String getAlias()
     {
         // some code goes here
-        return null;
+        return tableAlias;
     }
 
     /**
@@ -72,7 +74,9 @@ public class SeqScan implements OpIterator {
      *            tableAlias.null, or null.null).
      */
     public void reset(int tableid, String tableAlias) {
-        // some code goes here
+        this.tableid = tableid;
+        this.tableAlias = tableAlias;
+        this.iterator = Database.getCatalog().getDatabaseFile(this.tableid).iterator(this.tid);
     }
 
     public SeqScan(TransactionId tid, int tableId) {
@@ -80,7 +84,7 @@ public class SeqScan implements OpIterator {
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        // some code goes here
+        this.iterator.open()
     }
 
     /**
@@ -94,27 +98,32 @@ public class SeqScan implements OpIterator {
      *         prefixed with the tableAlias string from the constructor.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        TupleDesc originalTd = this.file.getTupleDesc();
+        Type[] newTdType = new Type[originalTd.numFields()];
+        String[] newTdField = new String[originalTd.numFields()];
+
+        for (int i = 0; i < originalTd.numFields(); i++) {
+            newTdType[i] = originalTd.getFieldType(i);
+            newTdField[i] = this.tableAlias + "." + originalTd.getFieldName(i);
+        }
+        return new TupleDesc(newTdType, newTdField);
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
-        // some code goes here
-        return false;
+        return this.iterator.hasNext();
     }
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+        return this.iterator.next();
     }
 
     public void close() {
-        // some code goes here
+        this.iterator.close()
     }
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
+        this.iterator.rewind()
     }
 }
