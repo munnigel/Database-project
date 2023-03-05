@@ -123,52 +123,36 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public List<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-                ArrayList<Page> modifiedPages = new ArrayList<>();
-                for (int currentPageNo = 0; currentPageNo < this.numPages(); currentPageNo++) {
-                    HeapPageId pageId = new HeapPageId(this.getId(), currentPageNo);
-                    HeapPage currentPage = (HeapPage)Database.getBufferPool().getPage(tid, pageId, Permissions.READ_ONLY);
-                    if (currentPage.getNumEmptySlots() > 0) {
-                        currentPage = (HeapPage) Database.getBufferPool().getPage(tid, pageId, Permissions.READ_WRITE);
-                        currentPage.insertTuple(t);
-                        modifiedPages.add(currentPage);
-                        break;
-                    } else {
-                        Database.getBufferPool().unsafeReleasePage(tid, pageId);
+                for (int i = 0; i < numPages(); i++) {
+                    HeapPageId pid = new HeapPageId(getId(), i);
+                    HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
+                    if (page.getNumEmptySlots() > 0) {
+                        page.insertTuple(t);
+                        return Collections.singletonList(page);
                     }
                 }
-                if (modifiedPages.isEmpty()) {
-                    HeapPage newPage = new HeapPage(new HeapPageId(getId(), numPages()), new byte[BufferPool.getPageSize()]);
-                    newPage.insertTuple(t);
-                    this.writePage(newPage);
-                    modifiedPages.add(newPage);
-                }
         
-                return modifiedPages;
+                // No page with empty slot found, need to create a new page
+                HeapPageId newPid = new HeapPageId(getId(), numPages());
+                HeapPage newPage = new HeapPage(newPid, HeapPage.createEmptyPageData());
+                newPage.insertTuple(t);
+                writePage(newPage);
+                return Collections.singletonList(newPage);
             }
         
 
     // see DbFile.java for javadocs
     public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException,
             TransactionAbortedException {
-                PageId pid = t.getRecordId().getPageId();
-                ArrayList<Page> affectedPages = new ArrayList<>();
-                for (int i = 0; i < numPages(); i++) {
-                    if (i == pid.getPageNumber()) {
-                        HeapPage affectedPage = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
-                        affectedPage.deleteTuple(t);
-                        affectedPages.add(affectedPage);
-                        break;
-                    }
-                }
-                if (affectedPages.isEmpty()) {
-                    throw new DbException("Tuple " + t + " is not in this table.");
-                }
-                return affectedPages;
+                HeapPageId pid = (HeapPageId) t.getRecordId().getPageId();
+                HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_WRITE);
+                page.deleteTuple(t);
+                return new ArrayList<>(Collections.singletonList(page));
     }
 
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
-        return new HeapFileIterator(this.getId(), tid, this.numPages()); //Muzi u need to change this. Jamestiotio added a new HeapFileIterator class, but we dont have one
+        return new HeapFileIterator(tid, this);
     }
 
 }
