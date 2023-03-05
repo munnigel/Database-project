@@ -116,20 +116,20 @@ public class SeqScan implements OpIterator {
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
-        return this.iterator.hasNext();
+        return iterator.hasNext();
     }
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
-        return this.iterator.next();
+        return iterator.next();
     }
 
     public void close() {
-        this.iterator.close();
+        iterator.close();
     }
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        this.iterator.rewind();
+        iterator.rewind();
     }
 }
