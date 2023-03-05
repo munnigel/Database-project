@@ -18,6 +18,12 @@ import java.util.*;
  */
 public class SeqScan implements OpIterator {
 
+    private TransactionId tid;
+    private int tableid;
+    private String tableAlias;
+    private DbFileIterator iterator;
+
+
     private static final long serialVersionUID = 1L;
 
     /**
@@ -84,7 +90,7 @@ public class SeqScan implements OpIterator {
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        this.iterator.open()
+        this.iterator.open();
     }
 
     /**
@@ -119,11 +125,11 @@ public class SeqScan implements OpIterator {
     }
 
     public void close() {
-        this.iterator.close()
+        this.iterator.close();
     }
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        this.iterator.rewind()
+        this.iterator.rewind();
     }
 }
