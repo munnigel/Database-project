@@ -13,6 +13,8 @@ import java.util.*;
 public class Filter extends Operator {
 
     private static final long serialVersionUID = 1L;
+    private Predicate p;
+    private OpIterator child;
 
     /**
      * Constructor accepts a predicate to apply and a child operator to read
@@ -25,29 +27,36 @@ public class Filter extends Operator {
      */
     public Filter(Predicate p, OpIterator child) {
         // some code goes here
+        this.p = p;
+        this.child = child;
     }
 
     public Predicate getPredicate() {
         // some code goes here
-        return null;
+        return this.p;
     }
 
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return null;
+        return this.child.getTupleDesc();
     }
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
         // some code goes here
+        this.child.open();
+        super.open();
     }
 
     public void close() {
         // some code goes here
+        super.close();
+        this.child.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
         // some code goes here
+        this.child.rewind();
     }
 
     /**
@@ -62,18 +71,30 @@ public class Filter extends Operator {
     protected Tuple fetchNext() throws NoSuchElementException,
             TransactionAbortedException, DbException {
         // some code goes here
+        while (this.child.hasNext()) {
+            Tuple t = this.child.next();
+            if (this.p.filter(t)) {
+                return t;
+            }
+        }
         return null;
     }
 
     @Override
     public OpIterator[] getChildren() {
         // some code goes here
-        return null;
+        return new OpIterator[] { this.child };
     }
 
     @Override
     public void setChildren(OpIterator[] children) {
         // some code goes here
+        if (children.length != 1) {
+            throw new IllegalArgumentException("Filter only has one child");
+        }
+        if (this.child != children[0]) {
+            this.child = children[0];
+        }
     }
 
 }
